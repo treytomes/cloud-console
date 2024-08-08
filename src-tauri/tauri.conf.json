@@ -11,17 +11,19 @@
   },
   "tauri": {
     "allowlist": {
-      "all": false,
+      "all": true,
       "shell": {
-        "all": false,
+        "all": true,
+        "execute": true,
+        "sidecar": true,
         "open": true
       }
     },
     "windows": [
       {
-        "title": "aws-console",
-        "width": 800,
-        "height": 600
+        "title": "AWS Console",
+        "width": 1024,
+        "height": 768
       }
     ],
     "security": {
