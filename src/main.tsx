@@ -9,7 +9,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <NextUIProvider>
       <ThemeProvider attribute="class" defaultTheme="dark">
-        <main className="w-screen h-screen bg-gray-200 dark:bg-black">
+        <main className="w-full h-full bg-gray-200 dark:bg-black">
           <Home />
         </main>
       </ThemeProvider>
