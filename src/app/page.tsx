@@ -5,27 +5,19 @@ import {
   Button,
   Navbar,
   NavbarBrand,
-  select,
   Selection,
   Spinner,
-  Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
 } from "@nextui-org/react";
 import { Profile } from "../models";
 import { LoaderContext } from "../context/LoaderContext";
 import toast from "react-hot-toast";
-import { exportCredentials } from "../queries";
 
 export default function Home() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const loader = useContext(LoaderContext);
 
   useEffect(() => {
-    loader.show("Loading profiles...");
+    loader.show("Loading profile...");
     Profile.getAll().then((profiles) => {
       setProfiles(profiles);
       loader.hide();
@@ -35,12 +27,12 @@ export default function Home() {
 
   // Reinsert a fresh update of the profile into the list.
   const reloadProfile = (profile: Profile) => {
-    console.log("reloading profiles");
     setProfiles(
       [profile, ...profiles.filter((x) => x.name !== profile.name)].sort(
         (a, b) => a.name.localeCompare(b.name)
       )
     );
+    console.log(`Reloaded ${profile.name}.`);
   };
 
   const onLogin = async (profile: Profile) => {
@@ -73,11 +65,11 @@ export default function Home() {
           toast.error(
             `Profile ${profile.name} does not appear to be logged in.`
           );
+        } finally {
+          reloadProfile(profile);
         }
       }
     });
-
-    setProfiles(profiles);
   };
 
   return (
@@ -86,13 +78,20 @@ export default function Home() {
         <NavbarBrand>AWS Console</NavbarBrand>
       </Navbar>
 
-      <Accordion variant="shadow" onSelectionChange={onSelectionChange}>
+      <Accordion variant="splitted" onSelectionChange={onSelectionChange}>
         {profiles.map((profile) => (
           <AccordionItem
             textValue={profile.name}
             key={profile.name}
             aria-label={profile.name}
-            title={profile.name}
+            title={
+              profile.name +
+              (profile.isLoggedIn === true
+                ? " (logged in)"
+                : profile.isLoggedIn === false
+                ? "(not logged in)"
+                : "(unknown)")
+            }
           >
             <div>
               <div className="rounded-lg bg-zinc-800 p-2 flex gap-2">

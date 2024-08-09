@@ -7,11 +7,10 @@ import { Credentials } from "./credentials";
 export class Profile {
   readonly name: string;
   credentials?: Credentials;
-  isLoggedIn: boolean;
+  isLoggedIn?: boolean;
 
   private constructor(name: string) {
     this.name = name;
-    this.isLoggedIn = false;
   }
 
   async loadCredentials(): Promise<Credentials> {
@@ -22,6 +21,7 @@ export class Profile {
         );
       }
       this.isLoggedIn = true;
+      // console.log(this.name, this.credentials, this.isLoggedIn);
       return this.credentials;
     } catch (e) {
       this.isLoggedIn = false;
