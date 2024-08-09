@@ -11,6 +11,7 @@ import {
 import { Profile } from "../models";
 import { LoaderContext } from "../context/LoaderContext";
 import toast from "react-hot-toast";
+import { FailureIcon, SuccessIcon, UnknownIcon } from "../components/icons";
 
 export default function Home() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -84,14 +85,16 @@ export default function Home() {
             textValue={profile.name}
             key={profile.name}
             aria-label={profile.name}
-            title={
-              profile.name +
-              (profile.isLoggedIn === true
-                ? " (logged in)"
-                : profile.isLoggedIn === false
-                ? "(not logged in)"
-                : "(unknown)")
+            startContent={
+              profile.isLoggedIn === true ? (
+                <SuccessIcon width={16} height={16} />
+              ) : profile.isLoggedIn === false ? (
+                <FailureIcon width={16} height={16} />
+              ) : (
+                <UnknownIcon width={16} height={16} />
+              )
             }
+            title={profile.name}
           >
             <div>
               <div className="rounded-lg bg-zinc-800 p-2 flex gap-2">
@@ -99,7 +102,7 @@ export default function Home() {
                   disabled={loader.isVisible}
                   onClick={() => onLogin(profile)}
                 >
-                  Login
+                  {profile.isLoggedIn ? "Refresh Token" : "Login"}
                 </Button>
                 <Button>A</Button>
                 <Button>B</Button>
