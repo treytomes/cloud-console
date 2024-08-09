@@ -1,10 +1,10 @@
-use super::exec::exec;
+use super::exec_async::exec_async;
 
-pub fn login(profile_name: &str) -> Result<String, String> {
-    let result = exec("aws", &["sso", "login", "--profile", profile_name]);
+pub async fn login(profile_name: &str) -> Result<String, String> {
+    let result = exec_async("aws", &["sso", "login", "--profile", profile_name]).await;
 
     match result {
         Ok(_) => Ok(format!("Logged in to {}", profile_name)),
-        Err(s) => return Err(s),
+        Err(s) => Err(s),
     }
 }

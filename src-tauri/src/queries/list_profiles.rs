@@ -1,12 +1,16 @@
-use super::exec::exec;
+use super::exec_async::exec_async;
 
-pub fn list_profiles() -> Result<Vec<String>, String> {
-    let result = exec("aws", &["configure", "list-profiles"]);
+pub async fn list_profiles() -> Result<Vec<String>, String> {
+    let result = exec_async("aws", &["configure", "list-profiles"]).await;
     match result {
         Ok(s) => {
-            let profiles = s.split("\n").map(|s| s.to_string()).collect::<Vec<String>>();
+            let profiles = s
+                .trim()
+                .split("\n")
+                .map(|s| s.trim().to_string())
+                .collect::<Vec<String>>();
             Ok(profiles)
-        },
-        Err(s) => return Err(s),
+        }
+        Err(s) => Err(s),
     }
 }

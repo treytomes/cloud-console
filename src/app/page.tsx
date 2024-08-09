@@ -1,114 +1,62 @@
-import { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/tauri";
+import { useContext, useEffect, useState } from "react";
 import {
+  Accordion,
+  AccordionItem,
   Button,
   Navbar,
   NavbarBrand,
-  SortDescriptor,
   Spinner,
-  Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
 } from "@nextui-org/react";
 import { useAsyncList } from "@react-stately/data";
-
-type Profile = {
-  name: string;
-};
-
-// const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
-
-function sortList<T extends Object>(list: T[], sortDescriptor: SortDescriptor) {
-  return list.sort((a, b) => {
-    let first = Reflect.get(a, sortDescriptor.column as PropertyKey) as string;
-    let second = Reflect.get(b, sortDescriptor.column as PropertyKey) as string;
-
-    let cmp =
-      (parseInt(first) || first) < (parseInt(second) || second) ? -1 : 1;
-
-    if (sortDescriptor.direction === "descending") {
-      cmp *= -1;
-    }
-
-    return cmp;
-  });
-}
+import { Profile } from "../models";
+import { LoaderContext } from "../context/LoaderContext";
+import { delay } from "../util";
+import toast from "react-hot-toast";
 
 export default function Home() {
-  const [isLoading, setIsLoading] = useState(true);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const loader = useContext(LoaderContext);
 
-  const profiles = useAsyncList<Profile>({
-    initialSortDescriptor: {
-      column: "name",
-      direction: "ascending",
-    },
-    async load({ sortDescriptor }) {
-      // await delay(5000);
-      const items = ((await invoke("list_profiles")) as string[]).map(
-        (profileName: string): Profile => ({
-          name: profileName,
-        })
-      );
+  useEffect(() => {
+    loader.show("Loading profiles...");
+    Profile.getAll().then((profiles) => {
+      setProfiles(profiles);
+      loader.hide();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-      setIsLoading(false);
-      return {
-        items: sortList(items, sortDescriptor),
-      };
-    },
-    async sort({ items, sortDescriptor }) {
-      return {
-        items: sortList(items, sortDescriptor),
-      };
-    },
-  });
-
-  const onLogin = async (profileName: string) => {
-    const result = await invoke("login", { profileName });
-    console.log(result);
+  const onLogin = async (profile: Profile) => {
+    toast.promise(profile.login(), {
+      loading: `Logging in to ${profile.name}...`,
+      success: `Logged in as ${profile.name}.`,
+      error: (err) => `Unable to log in to ${profile.name}: ${err}`,
+    });
   };
 
   return (
     <div className="w-full h-full">
-      <Navbar shouldHideOnScroll>
+      <Navbar>
         <NavbarBrand>AWS Console</NavbarBrand>
       </Navbar>
-      <Table
-        aria-label="AWS Profiles"
-        isHeaderSticky
-        isStriped
-        sortDescriptor={profiles.sortDescriptor}
-        onSortChange={profiles.sort}
-        selectionBehavior="replace"
-        selectionMode="single"
-        classNames={{
-          wrapper: "overflow-clip",
-        }}
-      >
-        <TableHeader>
-          <TableColumn aria-label="Profile Name" key="name" allowsSorting>
-            Profile Name
-          </TableColumn>
-          <TableColumn aria-label="Actions">Actions</TableColumn>
-        </TableHeader>
-        <TableBody
-          items={profiles.items}
-          isLoading={isLoading}
-          loadingContent={<Spinner label="Loading..." />}
-          emptyContent="No profiles to display."
-        >
-          {(profile) => (
-            <TableRow key={profile.name}>
-              <TableCell>{profile.name}</TableCell>
-              <TableCell>
-                <Button onPress={() => onLogin(profile.name)}>Login</Button>
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+
+      <Accordion variant="shadow">
+        {profiles.map((profile) => (
+          <AccordionItem
+            textValue="A Text VAlue"
+            key={profile.name}
+            aria-label={profile.name}
+            title={profile.name}
+          >
+            <Button
+              disabled={loader.isVisible}
+              onClick={() => onLogin(profile)}
+            >
+              Login
+            </Button>
+          </AccordionItem>
+        ))}
+      </Accordion>
     </div>
   );
 }

@@ -5,17 +5,14 @@ mod queries;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 
-#[tauri::command]
-fn login(profile_name: &str) -> Result<String, String> {
-    println!("Begin login");
-    let result = queries::login(profile_name);
-    println!("End login");
-    result
+#[tauri::command(async)]
+async fn login(profile_name: &str) -> Result<String, String> {
+    queries::login(profile_name).await
 }
 
-#[tauri::command]
-fn list_profiles() -> Result<Vec<String>, String> {
-    queries::list_profiles()
+#[tauri::command(async)]
+async fn list_profiles() -> Result<Vec<String>, String> {
+    queries::list_profiles().await
 }
 
 fn main() {
