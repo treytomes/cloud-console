@@ -12,8 +12,8 @@ import { Profile } from "../models";
 import { LoaderContext } from "../context/LoaderContext";
 import toast from "react-hot-toast";
 import { FailureIcon, SuccessIcon, UnknownIcon } from "../components/icons";
-import * as http from "@tauri-apps/api/http";
-import { openUrl } from "../queries";
+import { openWebConsole } from "../queries";
+import { useInterval } from "../components/useInterval";
 
 export default function Home() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -25,12 +25,14 @@ export default function Home() {
       setProfiles(profiles);
       loader.hide();
     });
-
-    // // This *should* update the expirations.
-    // setTimeout(() => setProfiles(profiles), 1000);
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useInterval(() => {
+    if (profiles.filter((x) => x.isLoggedIn).length > 0) {
+      setProfiles([...profiles]);
+    }
+  }, 1000);
 
   // Reinsert a fresh update of the profile into the list.
   const reloadProfile = (profile: Profile) => {
@@ -58,38 +60,12 @@ export default function Home() {
   };
 
   const onOpenWebConsole = async (profile: Profile) => {
-    type FederationResponse = {
-      SigninToken: string;
-    };
-
-    if (!profile.credentials) {
-      toast.error(`Profile ${profile.name} does not appear to be logged in.`);
+    try {
+      await openWebConsole(profile);
+    } catch (e) {
+      toast.error(`${e}`);
       return;
     }
-    const urlCredentials = {
-      sessionId: profile.credentials.accessKeyId,
-      sessionKey: profile.credentials.secretAccessKey,
-      sessionToken: profile.credentials.sessionToken,
-    };
-    let requestParameters = `?Action=getSigninToken&SessionDuration=43200&Session=${encodeURIComponent(
-      JSON.stringify(urlCredentials)
-    )}`;
-    let requestUrl = `https://signin.aws.amazon.com/federation${requestParameters}`;
-
-    const response = await http.fetch(requestUrl);
-    const data = response.data as FederationResponse;
-    if (!data?.SigninToken) throw new Error("Failed to get signin token");
-    const signinToken = data.SigninToken;
-    console.log("response:", response.data);
-
-    requestParameters = `?Action=login&Destination=${encodeURIComponent(
-      "https://console.aws.amazon.com"
-    )}&SigninToken=${signinToken}&Issuer=${encodeURIComponent(
-      "https://example.com"
-    )}`;
-
-    requestUrl = `https://signin.aws.amazon.com/federation${requestParameters}`;
-    openUrl(requestUrl);
   };
 
   const onSelectionChange = async (keys: Selection) => {
@@ -138,16 +114,21 @@ export default function Home() {
             title={
               <div>
                 <div className="float-left">{profile.name}</div>
-                {profile.credentials &&
-                  profile.credentials.expiration.diffNow("seconds").seconds}
                 {profile.credentials && (
                   <div className="float-right">
                     {`Expires in ${profile.credentials.expiration
                       .diffNow("hours")
-                      .hours.toFixed(0)} hours, ${(
+                      .hours.toFixed(0)}:${(
                       profile.credentials.expiration.diffNow("minute").minutes %
                       60
-                    ).toFixed(0)} minutes.`}
+                    )
+                      .toFixed(0)
+                      .padStart(2, "0")}:${(
+                      profile.credentials.expiration.diffNow("second").seconds %
+                      60
+                    )
+                      .toFixed(0)
+                      .padStart(2, "0")}.`}
                   </div>
                 )}
               </div>
