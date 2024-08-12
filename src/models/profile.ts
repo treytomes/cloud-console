@@ -1,6 +1,6 @@
 import * as queries from "../queries";
-import * as luxon from "luxon";
 import { Credentials } from "./credentials";
+import { Identity } from "./identity";
 
 /**
  * An AWS SSO profile.
@@ -8,6 +8,7 @@ import { Credentials } from "./credentials";
 export class Profile {
   readonly name: string;
   credentials?: Credentials;
+  identity?: Identity;
   isLoggedIn?: boolean;
 
   private constructor(name: string) {
@@ -22,12 +23,29 @@ export class Profile {
         );
       }
       this.isLoggedIn = true;
-      // console.log(this.name, this.credentials, this.isLoggedIn);
       return this.credentials;
     } catch (e) {
       this.isLoggedIn = false;
       throw new Error(
         `Failed to load credentials for profile '${this.name}': ${e}`
+      );
+    }
+  }
+
+  async loadIdentity(): Promise<Identity> {
+    try {
+      if (!this.identity) {
+        this.identity = new Identity(
+          await queries.getCallerIdentity(this.name)
+        );
+      }
+      this.isLoggedIn = true;
+      console.log("identity", this.identity);
+      return this.identity;
+    } catch (e) {
+      this.isLoggedIn = false;
+      throw new Error(
+        `Failed to load identity for profile '${this.name}': ${e}`
       );
     }
   }
@@ -42,6 +60,10 @@ export class Profile {
       this.isLoggedIn = false;
       throw new Error(`Failed to login to profile '${this.name}': ${e}`);
     }
+  }
+
+  async openWebConsole(): Promise<void> {
+    await queries.openWebConsole(this);
   }
 
   static async getAll(): Promise<Profile[]> {

@@ -14,7 +14,8 @@
       "all": true,
       "http": {
         "scope": [
-          "https://signin.aws.amazon.com/federation*"
+          "https://console.aws.amazon.com*",
+          "https://signin.aws.amazon.com*"
         ]
       },
       "shell": {

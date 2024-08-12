@@ -14,6 +14,8 @@ import toast from "react-hot-toast";
 import { FailureIcon, SuccessIcon, UnknownIcon } from "../components/icons";
 import { openWebConsole } from "../queries";
 import { useInterval } from "../components/useInterval";
+import { IdentityTable } from "../components/IdentityTable";
+import { CredentialsTable } from "../components/CredentialsTable";
 
 export default function Home() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -49,6 +51,7 @@ export default function Home() {
       profile
         .login()
         .then(async () => await profile.loadCredentials())
+        .then(async () => await profile.loadIdentity())
         .then(() => reloadProfile(profile)),
       {
         loading: `Logging in to ${profile.name}...`,
@@ -79,6 +82,7 @@ export default function Home() {
         console.log("Loading credentials for profile", profile.name);
         try {
           await profile.loadCredentials();
+          await profile.loadIdentity();
         } catch (e) {
           toast.error(
             `Profile ${profile.name} does not appear to be logged in.`
@@ -155,34 +159,18 @@ export default function Home() {
 
               {profile.credentials && (
                 <div>
-                  <table className="table-fixed w-full">
-                    <tbody>
-                      <tr className="odd:bg-gray-100 odd:dark:bg-gray-800 hover:bg-stone-100 hover:dark:bg-gray-600">
-                        <th className="min-w-48">access-key-id</th>
-                        <td>{profile.credentials.accessKeyId}</td>
-                      </tr>
-                      <tr className="odd:bg-gray-100 odd:dark:bg-gray-800 hover:bg-stone-100 hover:dark:bg-gray-600">
-                        <th>secret-access-key</th>
-                        <td>{profile.credentials.secretAccessKey}</td>
-                      </tr>
-                      <tr className="odd:bg-gray-100 odd:dark:bg-gray-800 hover:bg-stone-100 hover:dark:bg-gray-600">
-                        <th>session-token</th>
-                        <td>
-                          <div className="break-words">
-                            {profile.credentials.sessionToken}
-                          </div>
-                        </td>
-                      </tr>
-                      <tr className="odd:bg-gray-100 odd:dark:bg-gray-800 hover:bg-stone-100 hover:dark:bg-gray-600">
-                        <th>expiration</th>
-                        <td>
-                          {profile.credentials.expiration
-                            .toJSDate()
-                            .toLocaleString()}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  {profile.identity && (
+                    <IdentityTable
+                      className="m-4"
+                      identity={profile.identity}
+                    />
+                  )}
+                  {profile.credentials && (
+                    <CredentialsTable
+                      className="m-4"
+                      credentials={profile.credentials}
+                    />
+                  )}
                 </div>
               )}
               {!profile.credentials && profile.isLoggedIn && <Spinner />}

@@ -1,5 +1,6 @@
 import { CredentialsDto } from "./credentials-dto";
 import * as luxon from "luxon";
+import { UrlCredentials } from "./federation";
 
 export class Credentials {
   readonly version: number;
@@ -14,5 +15,13 @@ export class Credentials {
     this.secretAccessKey = dto.secret_access_key;
     this.sessionToken = dto.session_token;
     this.expiration = luxon.DateTime.fromISO(dto.expiration);
+  }
+
+  toUrlCredentials(): UrlCredentials {
+    return {
+      sessionId: this.accessKeyId,
+      sessionKey: this.secretAccessKey,
+      sessionToken: this.sessionToken,
+    };
   }
 }
