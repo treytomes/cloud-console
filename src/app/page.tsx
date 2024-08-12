@@ -12,7 +12,8 @@ import { Profile } from "../models";
 import { LoaderContext } from "../context/LoaderContext";
 import toast from "react-hot-toast";
 import { FailureIcon, SuccessIcon, UnknownIcon } from "../components/icons";
-import * as luxon from "luxon";
+import * as http from "@tauri-apps/api/http";
+import { openUrl } from "../queries";
 
 export default function Home() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -54,6 +55,41 @@ export default function Home() {
           `Unable to log in to ${profile.name}: ${JSON.stringify(err)}`,
       }
     );
+  };
+
+  const onOpenWebConsole = async (profile: Profile) => {
+    type FederationResponse = {
+      SigninToken: string;
+    };
+
+    if (!profile.credentials) {
+      toast.error(`Profile ${profile.name} does not appear to be logged in.`);
+      return;
+    }
+    const urlCredentials = {
+      sessionId: profile.credentials.accessKeyId,
+      sessionKey: profile.credentials.secretAccessKey,
+      sessionToken: profile.credentials.sessionToken,
+    };
+    let requestParameters = `?Action=getSigninToken&SessionDuration=43200&Session=${encodeURIComponent(
+      JSON.stringify(urlCredentials)
+    )}`;
+    let requestUrl = `https://signin.aws.amazon.com/federation${requestParameters}`;
+
+    const response = await http.fetch(requestUrl);
+    const data = response.data as FederationResponse;
+    if (!data?.SigninToken) throw new Error("Failed to get signin token");
+    const signinToken = data.SigninToken;
+    console.log("response:", response.data);
+
+    requestParameters = `?Action=login&Destination=${encodeURIComponent(
+      "https://console.aws.amazon.com"
+    )}&SigninToken=${signinToken}&Issuer=${encodeURIComponent(
+      "https://example.com"
+    )}`;
+
+    requestUrl = `https://signin.aws.amazon.com/federation${requestParameters}`;
+    openUrl(requestUrl);
   };
 
   const onSelectionChange = async (keys: Selection) => {
@@ -121,11 +157,16 @@ export default function Home() {
               <div className="rounded-lg bg-zinc-800 p-2 flex gap-2">
                 <Button
                   disabled={loader.isVisible}
-                  onClick={() => onLogin(profile)}
+                  onPress={() => onLogin(profile)}
                 >
                   {profile.isLoggedIn ? "Refresh Token" : "Login"}
                 </Button>
-                <Button>A</Button>
+                <Button
+                  disabled={!profile.credentials}
+                  onPress={() => onOpenWebConsole(profile)}
+                >
+                  Web Console
+                </Button>
                 <Button>B</Button>
                 <Button>C</Button>
                 <Button>D</Button>

@@ -12,6 +12,11 @@
   "tauri": {
     "allowlist": {
       "all": true,
+      "http": {
+        "scope": [
+          "https://signin.aws.amazon.com/federation*"
+        ]
+      },
       "shell": {
         "all": true,
         "execute": true,
