@@ -12,6 +12,7 @@ import { Profile } from "../models";
 import { LoaderContext } from "../context/LoaderContext";
 import toast from "react-hot-toast";
 import { FailureIcon, SuccessIcon, UnknownIcon } from "../components/icons";
+import * as luxon from "luxon";
 
 export default function Home() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -23,6 +24,10 @@ export default function Home() {
       setProfiles(profiles);
       loader.hide();
     });
+
+    // // This *should* update the expirations.
+    // setTimeout(() => setProfiles(profiles), 1000);
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -94,7 +99,23 @@ export default function Home() {
                 <UnknownIcon width={16} height={16} />
               )
             }
-            title={profile.name}
+            title={
+              <div>
+                <div className="float-left">{profile.name}</div>
+                {profile.credentials &&
+                  profile.credentials.expiration.diffNow("seconds").seconds}
+                {profile.credentials && (
+                  <div className="float-right">
+                    {`Expires in ${profile.credentials.expiration
+                      .diffNow("hours")
+                      .hours.toFixed(0)} hours, ${(
+                      profile.credentials.expiration.diffNow("minute").minutes %
+                      60
+                    ).toFixed(0)} minutes.`}
+                  </div>
+                )}
+              </div>
+            }
           >
             <div>
               <div className="rounded-lg bg-zinc-800 p-2 flex gap-2">
@@ -112,7 +133,7 @@ export default function Home() {
 
               {profile.credentials && (
                 <div>
-                  <table className="table-fixed">
+                  <table className="table-fixed w-full">
                     <tbody>
                       <tr className="odd:bg-gray-100 odd:dark:bg-gray-800 hover:bg-stone-100 hover:dark:bg-gray-600">
                         <th className="min-w-48">access-key-id</th>
@@ -124,7 +145,11 @@ export default function Home() {
                       </tr>
                       <tr className="odd:bg-gray-100 odd:dark:bg-gray-800 hover:bg-stone-100 hover:dark:bg-gray-600">
                         <th>session-token</th>
-                        <td>{profile.credentials.sessionToken}</td>
+                        <td>
+                          <div className="break-words">
+                            {profile.credentials.sessionToken}
+                          </div>
+                        </td>
                       </tr>
                       <tr className="odd:bg-gray-100 odd:dark:bg-gray-800 hover:bg-stone-100 hover:dark:bg-gray-600">
                         <th>expiration</th>
