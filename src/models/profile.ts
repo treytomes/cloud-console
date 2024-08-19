@@ -1,6 +1,7 @@
 import * as queries from "../queries";
 import { Credentials } from "./credentials";
 import { Identity } from "./identity";
+import * as luxon from "luxon";
 
 /**
  * An AWS SSO profile.
@@ -9,7 +10,13 @@ export class Profile {
   readonly name: string;
   credentials?: Credentials;
   identity?: Identity;
-  isLoggedIn?: boolean;
+
+  get isLoggedIn(): boolean {
+    return (
+      this.credentials?.expiration !== undefined &&
+      this.credentials?.expiration > luxon.DateTime.now()
+    );
+  }
 
   private constructor(name: string) {
     this.name = name;
@@ -22,10 +29,8 @@ export class Profile {
           await queries.exportCredentials(this.name)
         );
       }
-      this.isLoggedIn = true;
       return this.credentials;
     } catch (e) {
-      this.isLoggedIn = false;
       throw new Error(
         `Failed to load credentials for profile '${this.name}': ${e}`
       );
@@ -39,11 +44,9 @@ export class Profile {
           await queries.getCallerIdentity(this.name)
         );
       }
-      this.isLoggedIn = true;
       console.log("identity", this.identity);
       return this.identity;
     } catch (e) {
-      this.isLoggedIn = false;
       throw new Error(
         `Failed to load identity for profile '${this.name}': ${e}`
       );
@@ -54,10 +57,8 @@ export class Profile {
     try {
       const result = await queries.login(this.name);
       await this.loadCredentials();
-      this.isLoggedIn = true;
       return result;
     } catch (e) {
-      this.isLoggedIn = false;
       throw new Error(`Failed to login to profile '${this.name}': ${e}`);
     }
   }

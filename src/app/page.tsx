@@ -30,7 +30,7 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useInterval(() => {
+  useInterval(async () => {
     if (profiles.filter((x) => x.isLoggedIn).length > 0) {
       setProfiles([...profiles]);
     }
@@ -109,7 +109,7 @@ export default function Home() {
             startContent={
               profile.isLoggedIn === true ? (
                 <SuccessIcon width={16} height={16} />
-              ) : profile.isLoggedIn === false ? (
+              ) : profile.credentials && profile.isLoggedIn === false ? (
                 <FailureIcon width={16} height={16} />
               ) : (
                 <UnknownIcon width={16} height={16} />
